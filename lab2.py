@@ -1,59 +1,78 @@
-def aci(term):
-    left_ind = []
-    left = 0
-    right = 0
-    counter = 0
-    if term[0] != "(":
-        term = "("+term+")"
-    print(term)
-    for i in term:
-        print(counter, i)
-        if i == "(":
-            left += 1
-            left_ind.append(counter)
-            counter += 1
-            continue
-        if i == ")":
-            right += 1
-            if left != right:
-                ind = left_ind.pop()+1
-                new = aci(term[ind:counter])
-                old = term[ind:counter]
-                print(old)
-                term = term.replace(old, new)
-                counter += 1
-                continue
-        if left == right:
-            lind = term.find("(")
-            rind = term.find(")")
-            term = term[lind+1:rind]
-            term = list(set(term))
-            print("qqqqqq", term)
-            ind = []
-            c = 0
-            flag = True
-            r = 0
-            l = 0
-            #
-            for j in term:
-                if j == "|":
-                    if r == l:
-                        ind.append(c)
-                if j == "(":
-                    l += 1
-                if j == ")":
-                    r += 1
-                c += 1
+import sys
 
-            """if "|"in term:
-                term=term.split('|')
-                term.sort()
-                print("ttttttttttttt",term)
-                #for j in term:
-            else:
-                return term"""
-        counter += 1
+class Tree:
+    def __init__(self, cargo, left=None, right=None):
+        self.cargo = cargo
+        self.left  = left
+        self.right = right
+
+    def __str__(self):
+        return str(self.cargo)
+
+tree=Tree()
+
+"""def make_tree(regex):
+    global tree
+    left=0
+    right=0
+    counter=0
+    for i in regex:
+        if
+        counter+=1"""
+
+def get_token(token_list, expected):
+    if token_list[0] == expected:
+        del token_list[0]
+        return True
+    else:
+        return False
+
+def get_number(token_list):
+    if get_token(token_list, '('):
+        x = get_sum(token_list)         # get the subexpression
+        get_token(token_list, ')')      # remove the closing parenthesis
+        return x
+    else:
+        x = token_list[0]
+        if type(x) != type(0): return None
+        token_list[0:1] = []
+        return Tree(x, None, None)
+
+def get_product(token_list):
+    a = get_number(token_list)
+    if get_token(token_list, '*'):
+        b = get_product(token_list)
+        return Tree('*', a, b)
+    else:
+        return a
+    
+def get_sum(token_list):
+    a = get_product(token_list)
+    if get_token(token_list, '+'):
+        b = get_sum(token_list)
+        return Tree('+', a, b)
+    else:
+        return a
+    
+
+
 
 regex = input()
 regex = regex.replace(' ', '')
-aci(regex)
+
+balance=0
+for i in range(len(regex)):
+    a = regex[i]
+    if a == '(':
+        balance += 1
+    elif a == ")":
+        balance -= 1
+    # print(constr, "\n", balance)
+if balance > 0:
+    print("Error! Some \")\" was missed")
+    sys.exit()
+elif balance < 0:
+    print("Error! Some \"(\" was missed")
+    sys.exit()
+
+#aci(regex)
