@@ -49,6 +49,7 @@ def get_star(token_list):
     else:
         return a
 
+
 def get_conc(token_list):
     a=get_star(token_list)
     if check_char(token_list):
