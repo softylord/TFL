@@ -51,16 +51,24 @@ def get_star(token_list):
 
 
 def get_conc(token_list):
+    print("fff", token_list)
+
     a=get_star(token_list)
     if check_char(token_list):
         #print("hi", token_list)
-        b=get_alt(token_list)
+        b=get_conc(token_list)
         return Tree('conc', a, b)
     else:
         return a
 
 def get_alt(token_list):
+    print("ggg", token_list)
+
     a = get_conc(token_list)
+    print("ggg", token_list)
+    print("--------------")
+    print_tree(a)
+    print("--------------")
     if get_token(token_list, '|'):
         #print("hhh")
         b = get_alt(token_list)
@@ -150,5 +158,5 @@ tree = get_alt(tok)
 #print_tree(tree)
 #print('-----------------')
 tree2=ssnf(tree)
-#print_tree(tree2)
+print_tree(tree2)
 print(back(tree2))
