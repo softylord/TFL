@@ -29,6 +29,10 @@ def get_char(token_list):
         x = get_alt(token_list)         # get the subexpression
         get_token(token_list, ')')      # remove the closing parenthesis
         return x
+    if get_token(token_list, '<'):
+        token_list[:token_list.index('>')+1]=[]
+        x='<eps>'
+        return Tree(x, None, None)
     else:
         x = token_list[0]
         #print("ffffffffffffffffffffff", x)
@@ -86,10 +90,17 @@ def back(tree):
         right=None
         if tree.right!=None: 
             right=back(tree.right)
+            #print(right)
         if tree.cargo=='conc':
             #print(tree.right.cargo, tree.left.cargo)
-            s=left+right
-            if tree.parent=='*':
+            if left=='<eps>':
+                if right!='<eps>':
+                    s=right
+            elif right=='<eps>':
+                s=left
+            else:
+                s=left+right
+            if tree.parent=='*' and len(s)>1:
                 s='('+s+')'
             return s
             """if tree.left.cargo=='|':
@@ -104,7 +115,8 @@ def back(tree):
                 s=left+right
                 return s"""
         elif tree.cargo=='*':
-            s=left+'*'
+            if left!='<eps>':
+                s=left+'*'
             return s
             """if tree.left.cargo=='|' or tree.left.cargo == 'conc':
                 s="("+left+")"+"*"
@@ -113,15 +125,18 @@ def back(tree):
                 s=left+"*"
             return s"""
         elif tree.cargo=='|':
-            
-            if left == right[:right.find('|')]:
-                s=right
-            else:
-                #print(left,right)
-                s=left+'|'+right
+            if left!='<eps>' or right!='<eps>':
+                ind=len(right)
+                if right.find('|')!=-1:
+                    ind=right.find('|')
+                if left == right[:ind]:
+                    s=right
+                else:
+                    #print(left,right)
+                    s=left+'|'+right
 
-            if tree.parent=='*' or tree.parent=='conc':
-                s='('+s+')'
+                if tree.parent=='*' or tree.parent=='conc':
+                    s='('+s+')'
             #print("fff", s)
             return s
         else:
@@ -191,11 +206,25 @@ def aci(tree):
         right=tree.right.cargo
         if left not in op and right not in op:
             #print(left, right)
+            charl=""
+            charr=""
             i=0
             while left[i]=='(':
                 i+=1
-            char=left[i:left.find(')')]
-            if char>right:
+            if i!=0:
+                charl=left[i:left.find(')')]
+            else:
+                charl=left
+
+            i=0
+            while right[i]=='(':
+                i+=1
+            if i!=0:
+                charr=right[i:right.find(')')]
+            else:
+                charr=right
+            #print(charl, charr)
+            if charl>charr:
                 rotate(tree)
             
         if left=='*':
@@ -253,7 +282,71 @@ def init_parents(tree):
             tree.right=init_parents(tree.right)
         return tree
     return
-    
+
+def dstr(tree):
+    op=['|', 'conc', '*']
+    flag=False
+    if tree==None:
+        return
+    elif tree.cargo!='|':
+        tree.left=dstr(tree.left)
+        tree.right=dstr(tree.right)
+        #return Tree(back(tree), None, None, tree.parent)
+        return tree
+    else:
+        tree.left=dstr(tree.left)
+        tree.right=dstr(tree.right)
+
+        left=tree.left.cargo
+        right=tree.right.cargo
+        #print(left, right)
+        """if left not in op and right not in op:
+            #print(left, right)
+            i=0
+            while left[i]=='(':
+                i+=1
+            char=left[i:left.find(')')]
+            if char>right:
+                rotate(tree)"""
+            
+        if left=='conc':
+            lt_lt=tree.left.left.cargo
+            lt_rt=tree.left.right.cargo
+            rt_lt=tree.right.left.cargo
+            rt_rt=tree.right.right.cargo
+            if right =='conc':
+                if lt_lt == rt_lt:
+                    rt_tree= Tree('|', tree.left.right, tree.right.right, 'conc')
+                    tree = Tree ('conc', tree.left.left, rt_tree, tree.parent)
+                    flag=True
+                elif lt_rt==rt_rt:
+                    lt_tree = Tree ('|', tree.left.left, tree.right.left, 'conc')
+                    tree = Tree ('conc', lt_tree, tree.left.right, tree.parent)
+                    flag=True
+            if right == '|':
+                if rt_lt=='conc':
+                    rt_lt_lt=tree.right.left.left.cargo
+                    rt_lt_rt=tree.right.left.right.cargo
+                    print(lt_rt, rt_lt_rt)
+                    if lt_lt == rt_lt_lt:
+                        lt_rt_tree=Tree('|', tree.left.right, tree.right.left.right, 'conc')
+                        lt_tree=Tree('conc', tree.left.left, lt_rt_tree, tree.cargo)
+                        tree=Tree(tree.cargo, lt_tree, tree.right.right, tree.parent)
+                        flag=True
+                    elif lt_rt==rt_lt_rt:
+                        print("here")
+                        lt_lt_tree=Tree('|', tree.left.left, tree.right.left.left, 'conc')
+                        lt_tree=Tree('conc', lt_lt_tree, tree.left.right, tree.cargo)
+                        tree=Tree(tree.cargo, lt_tree, tree.right.right, tree.parent)
+                        flag=True
+            
+                    
+                
+        if flag:
+            tree=dstr(tree)
+
+                
+        return tree
     
 def balance(regex):
     bal=0
@@ -279,7 +372,6 @@ def main():
     tokens.append('end')
     tree = get_alt(tokens)
     """print_tree(tree)
-    
     print(back(tree))
     print('-----------------')"""
     tree2=ssnf(tree)
@@ -287,6 +379,15 @@ def main():
     #print(back(tree2))
     tree2=init_parents(tree2)
     tree3=aci(tree2)
-    print(back(tree3))
+    #print("1", back(tree3))
+
+    tokens=list(back(tree3))
+    tokens.append('end')
+    tree = get_alt(tokens)
+    tree = init_parents(tree)
+    #print_tree(tree)
+    tree2= dstr(tree)
+    tree2= aci(tree2)
+    print(back(tree2))
 
 main()
