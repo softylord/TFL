@@ -339,6 +339,27 @@ def dstr(tree):
                         lt_tree=Tree('conc', lt_lt_tree, tree.left.right, tree.cargo)
                         tree=Tree(tree.cargo, lt_tree, tree.right.right, tree.parent)
                         flag=True
+            """if right not in op:
+                if lt_lt==right:
+                    rt_rt_tree= Tree('<eps>', None, None, '|')
+                    rt_tree= Tree('|', tree.left.right, rt_rt_tree, 'conc')
+                    tree = Tree ('conc', tree.left.left, rt_tree, tree.parent)
+                    flag=True"""
+        if left not in op:
+            if right=='conc':
+                rt_lt=tree.right.left.cargo
+                rt_rt=tree.right.right.cargo
+                if left==rt_lt:
+                    rt_rt_tree= Tree('<eps>', None, None, '|')
+                    rt_tree= Tree('|', tree.right.right, rt_rt_tree, 'conc')
+                    tree = Tree ('conc', tree.left, rt_tree, tree.parent)
+                    flag=True
+                elif left==rt_rt:
+                    rt_rt_tree= Tree('<eps>', None, None, '|')
+                    rt_tree= Tree('|', tree.right.left, rt_rt_tree, 'conc')
+                    tree = Tree ('conc', rt_tree, tree.left, tree.parent)
+                    flag=True    
+            
             
                     
                 
