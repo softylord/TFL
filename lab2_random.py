@@ -1,7 +1,5 @@
 import sys
-from test import random_regex
-
-import sys
+from test_2 import rand_reg
 
 class Tree:
     def __init__(self, cargo, left=None, right=None, parent=None):
@@ -12,8 +10,16 @@ class Tree:
 
     def __str__(self):
         return str(self.cargo)
-    
-
+    def __eq__(self, other):
+        if self is None and other is None:
+            return True
+        if self is not None and other is None:
+            return False
+        if self is None and other is not None:
+            return False
+        if self is not None and other is not None:
+            return (self.cargo==other.cargo) \
+              and (self.left == other.left) and (self.right == other.right)
 def check_char(token_list):
     if token_list[0]!='|' and token_list[0]!='end' and token_list[0]!='*' and token_list[0]!=')':
         return True
@@ -32,6 +38,10 @@ def get_char(token_list):
         x = get_alt(token_list)         # get the subexpression
         get_token(token_list, ')')      # remove the closing parenthesis
         return x
+    if get_token(token_list, '<'):
+        token_list[:token_list.index('>')+1]=[]
+        x='<eps>'
+        return Tree(x, None, None)
     else:
         x = token_list[0]
         #print("ffffffffffffffffffffff", x)
@@ -89,42 +99,36 @@ def back(tree):
         right=None
         if tree.right!=None: 
             right=back(tree.right)
+            #print(right)
         if tree.cargo=='conc':
             #print(tree.right.cargo, tree.left.cargo)
-            s=left+right
-            if tree.parent=='*':
-                s='('+s+')'
-            return s
-            """if tree.left.cargo=='|':
-                s='('+left+')'+right
-                if tree.right.cargo=='|':
-                    s='('+left+')'+'('+right+')'
-                return s
-            if tree.right.cargo=='|':
-                s=left+'('+right+')'
-                return s
+            if left=='<eps>':
+                if right!='<eps>':
+                    s=right
+            elif right=='<eps>':
+                s=left
             else:
                 s=left+right
-                return s"""
-        elif tree.cargo=='*':
-            s=left+'*'
-            return s
-            """if tree.left.cargo=='|' or tree.left.cargo == 'conc':
-                s="("+left+")"+"*"
-            else:
-                #print("gggggg", left)
-                s=left+"*"
-            return s"""
-        elif tree.cargo=='|':
-            
-            if left == right[:right.find('|')]:
-                s=right
-            else:
-                #print(left,right)
-                s=left+'|'+right
-
-            if tree.parent=='*' or tree.parent=='conc':
+            if tree.parent=='*' and len(s)>1:
                 s='('+s+')'
+            return s
+        elif tree.cargo=='*':
+            if left!='<eps>':
+                s=left+'*'
+            return s
+        elif tree.cargo=='|':
+            if left!='<eps>' or right!='<eps>':
+                ind=len(right)
+                if right.find('|')!=-1:
+                    ind=right.find('|')
+                if left == right[:ind]:
+                    s=right
+                else:
+                    #print(left,right)
+                    s=left+'|'+right
+
+                if tree.parent=='*' or tree.parent=='conc':
+                    s='('+s+')'
             #print("fff", s)
             return s
         else:
@@ -194,11 +198,25 @@ def aci(tree):
         right=tree.right.cargo
         if left not in op and right not in op:
             #print(left, right)
+            charl=""
+            charr=""
             i=0
             while left[i]=='(':
                 i+=1
-            char=left[i:left.find(')')]
-            if char>right:
+            if i!=0:
+                charl=left[i:left.find(')')]
+            else:
+                charl=left
+
+            i=0
+            while right[i]=='(':
+                i+=1
+            if i!=0:
+                charr=right[i:right.find(')')]
+            else:
+                charr=right
+            #print(charl, charr)
+            if charl>charr:
                 rotate(tree)
             
         if left=='*':
@@ -232,7 +250,10 @@ def aci(tree):
                 i=0
                 while left[i]=='(':
                     i+=1
-                char=left[i:left.find(')')]
+                ind=1
+                if left.find(')')!=-1:
+                    ind=left.find(')')
+                char=left[i:ind]
                 if char>rt_lt:
                     temp=tree.left
                     tree.left=tree.right.left
@@ -256,7 +277,106 @@ def init_parents(tree):
             tree.right=init_parents(tree.right)
         return tree
     return
-    
+
+def dstr(tree):
+    op=['|', 'conc', '*']
+    flag=False
+    if tree==None:
+        return
+    elif tree.cargo!='|':
+        tree.left=dstr(tree.left)
+        tree.right=dstr(tree.right)
+        #return Tree(back(tree), None, None, tree.parent)
+        return tree
+    else:
+        tree.left=dstr(tree.left)
+        tree.right=dstr(tree.right)
+
+        left=tree.left.cargo
+        right=tree.right.cargo
+        #print(left, right)
+        """if left not in op and right not in op:
+            #print(left, right)
+            i=0
+            while left[i]=='(':
+                i+=1
+            char=left[i:left.find(')')]
+            if char>right:
+                rotate(tree)"""
+            
+        if left=='conc':
+            lt_lt=tree.left.left
+            lt_rt=tree.left.right
+            rt_lt=tree.right.left
+            rt_rt=tree.right.right
+            if right =='conc':
+                if lt_lt == rt_lt:
+                    rt_tree= Tree('|', tree.left.right, tree.right.right, 'conc')
+                    tree = Tree ('conc', tree.left.left, rt_tree, tree.parent)
+                    flag=True
+                elif lt_rt==rt_rt:
+                    lt_tree = Tree ('|', tree.left.left, tree.right.left, 'conc')
+                    tree = Tree ('conc', lt_tree, tree.left.right, tree.parent)
+                    flag=True
+            if right == '|':
+                if rt_lt.cargo=='conc':
+                    rt_lt_lt=tree.right.left.left
+                    rt_lt_rt=tree.right.left.right
+                    #print(lt_rt, rt_lt_rt)
+                    if lt_lt == rt_lt_lt:
+                        lt_rt_tree=Tree('|', tree.left.right, tree.right.left.right, 'conc')
+                        lt_tree=Tree('conc', tree.left.left, lt_rt_tree, tree.cargo)
+                        tree=Tree(tree.cargo, lt_tree, tree.right.right, tree.parent)
+                        flag=True
+                    elif lt_rt==rt_lt_rt:
+                        #print("here")
+                        lt_lt_tree=Tree('|', tree.left.left, tree.right.left.left, 'conc')
+                        lt_tree=Tree('conc', lt_lt_tree, tree.left.right, tree.cargo)
+                        tree=Tree(tree.cargo, lt_tree, tree.right.right, tree.parent)
+                        flag=True
+        if left not in op:
+            if right=='conc':
+                rt_lt=tree.right.left.cargo
+                rt_rt=tree.right.right.cargo
+                if left==rt_lt:
+                    rt_rt_tree= Tree('<eps>', None, None, '|')
+                    rt_tree= Tree('|', tree.right.right, rt_rt_tree, 'conc')
+                    tree = Tree ('conc', tree.left, rt_tree, tree.parent)
+                    flag=True
+                elif left==rt_rt:
+                    rt_rt_tree= Tree('<eps>', None, None, '|')
+                    rt_tree= Tree('|', tree.right.left, rt_rt_tree, 'conc')
+                    tree = Tree ('conc', rt_tree, tree.left, tree.parent)
+                    flag=True
+            if right=='|':
+                rt_lt=tree.right.left.cargo
+                rt_rt=tree.right.right.cargo
+                if rt_lt=='conc':
+                    rt_lt_lt=tree.right.left.left.cargo
+                    rt_lt_rt=tree.right.left.right.cargo
+                    
+                    #print(left, rt_lt_lt)
+                    if left == rt_lt_lt:
+                        eps_tree=Tree('<eps>', None, None, '|')
+                        lt_rt_tree=Tree('|', eps_tree, tree.right.left.right, 'conc')
+                        lt_tree=Tree('conc', tree.left, lt_rt_tree, tree.cargo)
+                        tree=Tree(tree.cargo, lt_tree, tree.right.right, tree.parent)
+                        flag=True
+                    elif left==rt_lt_rt:
+                        #print("here")
+                        eps_tree=Tree('<eps>', None, None, '|')
+                        lt_lt_tree=Tree('|', eps_tree, tree.right.left.left, 'conc')
+                        lt_tree=Tree('conc', lt_lt_tree, tree.left, tree.cargo)
+                        tree=Tree(tree.cargo, lt_tree, tree.right.right, tree.parent)
+                        flag=True
+            
+                    
+                
+        if flag:
+            tree=dstr(tree)
+
+                
+        return tree
     
 def balance(regex):
     bal=0
@@ -277,21 +397,32 @@ def balance(regex):
 def main():
     # regex = input()
     exp = ""
-    regex = random_regex(exp)
+    exp2=[]
+    regex = rand_reg(exp2, [])
     print("old regex", regex)
     regex = regex.replace(' ', '')
     balance(regex)
-    tokens = list(regex)
+    tokens=list(regex)
     tokens.append('end')
     tree = get_alt(tokens)
-    # print_tree(tree)
-    # print('-----------------')
-    tree2 = ssnf(tree)
-    # print_tree(tree2)
-    # print(back(tree2))
+    """print_tree(tree)
+    print(back(tree))
+    print('-----------------')"""
+    tree2=ssnf(tree)
+    #print_tree(tree2)
+    #print(back(tree2))
     tree2=init_parents(tree2)
-    tree3 = aci(tree2)
-    print("new regex", back(tree3), "\n")
+    tree3=aci(tree2)
+    #print("1", back(tree3))
+
+    tokens=list(back(tree3))
+    tokens.append('end')
+    tree = get_alt(tokens)
+    tree = init_parents(tree)
+    #print_tree(tree)
+    tree2= dstr(tree)
+    tree2= aci(tree2)
+    print("new regex", back(tree2), "\n")
 
 for _ in range(10):
     main()
