@@ -10,8 +10,8 @@ star_hight = 3
 max_amount_of_symbols = 12
 max_amount_of_letters = 5
 symbols = ["|", "", "&"]
-abc = ["a", "b", "c", "d", "<eps>"]
-abc_with_brace = ["a)", "b)", "c)", "d)", "<eps>)"]
+abc = ["a", "b", "c", "d"]
+abc_with_brace = ["a)", "b)", "c)", "d)"]
 
 def use_regex(input_text):
     s = r"\(a\|b\)\|\(ab\|cc\)"
@@ -38,7 +38,7 @@ flag1 = False
 def rand_reg(exp, res):
     amount_of_letters = 0
     if exp == []:
-        exp.append(random.choice(["(", "a", "b", "c", "d", "<eps>"]))
+        exp.append(random.choice(["(", "a", "b", "c", "d"]))
         res.append(exp[0])
         # print(res)
     else:
