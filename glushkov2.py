@@ -3,27 +3,23 @@ import re
 import datetime
 from test_2 import rand_reg
 import lab2
+import time
 
 """""
 генерация регулярок
 """""
 
 reggg = rand_reg([],[])
-#reggg="d*c*(ac)*b*b"
-print(reggg)
 while reggg.find('**')!=-1:
     reggg = reggg.replace("**", "*")
 while reggg.find('()')!=-1:
     reggg=reggg.replace("()", "")
 pattern3 = reggg
-#reggg = reggg.replace("*<eps>", "")
 print(reggg)
 """""
 ПОСТРОЕНИЕ АВТОМАТА И ГЕНЕРАЦИЯ СТРОК
 """""
 
-reg = "a(bc(a|b|cb)*)|d"
-reg1 = "a|b"
 def find_closing_brac(reg, open_ind):
     count_brac = 0
     for i in range(open_ind+1, len(reg)):
@@ -68,7 +64,7 @@ def parsing(reg):
         if reg == "|" or reg == "&":
             return reg
         else:
-            #print('@@@', reg)
+            # print('@@@', reg)
             global var_index
             var_index += 1
             global vars
@@ -81,8 +77,10 @@ def parsing(reg):
             return [[parsing(reg[1])], "*"]
         return [parsing(reg[1:-2]), "*"]
     elif reg[0] == "(" and find_closing_brac(reg, 0) == len(reg)-1:
+        print("reg[1]", reg)
+        print("-----", reg[1:-1])
         if len(reg) == 3:
-            return [reg[1]]
+            return parsing(reg[1])
         # print(reg)
         return parsing(reg[1:-1])
         # return "eee"
@@ -262,12 +260,6 @@ def make_automata(reg):
             res.append((vars[i], follows[j][0], follows[j]))
 
     return res
-
-# построить матрицу достижимости
-
-# список коретежей (название состояние, список достижимых из него состояний)
-# зацикливание
-# res = [(S, [b1, b3]), (b1, [a2]), (a2, [a4]), .... ]
 def is_in_automata(q, automata):
     res = []
     for i in range(len(automata)):
@@ -356,70 +348,39 @@ def create_cycle(Q, last, automat, done):
         return ""
 
 def create_word(first_q, last_q, automat):
-    #print(first_q + "    "+ last_q)
-    # return first_q + "   "+ last_q
     word = ""
     start_pos = first_q
     next_q = []
-    # print(reach_mtx[find_ind(first_q, reach_mtx)][1], last_q)
     if first_q == last_q and last_q in reach_mtx[find_ind(first_q, reach_mtx)][1]:
-        # repeat = random.randint(1, 15)
         return ""
         # return ""
-    #print("+++++++++++++++", first_q)
     if last_q in reach_mtx[find_ind(first_q, reach_mtx)][1]:
         for i in range(len(automat)):
-            #print(automat[i])
             if automat[i][0] == first_q:
-                #print(first_q, automat[i])
                 if last_q in reach_mtx[find_ind(automat[i][2], reach_mtx)][1] or last_q==automat[i][2]:
-                    
-                    #print(automat[i][2], "automat[i][2]", reach_mtx[find_ind(first_q, reach_mtx)][1])
                     next_q.append(automat[i][2])
-                #print("automata[i][2]", automat[i][2], automat[i+1][2])
-        #print(first_q, next_q)
         if len(next_q) == 0:
             return last_q[0]
         if len(next_q) == 1:
-            #print("___________")
             if next_q == first_q:
-                 word += next_q[0][0]*random.randint(600, 800)
+                 word += next_q[0][0]*random.randint(100, 300)
             else:
                 word += next_q[0][0]
             nq = next_q[0]
         else:
 
             nq = random.choice(next_q)
-            #print("nqqqqq", nq)
             if nq == first_q:
-                wn = nq[0][0]*random.randint(600, 800)
+                wn = nq[0][0]*random.randint(100, 300)
                 word += wn
-                #print("wn", wn)
             else:
                 word += nq[0][0]
-        #print("first", first_q, "nq", nq, nq[0])
         return word + create_word(nq, last_q, automat)
     else:
         return ""
 
 
-# pattern = r'(ba|b)aa(a|ab)*'
-# S = "baaabababac"
-# s = datetime.datetime.now()
-# f = re.fullmatch(pattern, S)
-# e = datetime.datetime.now()
-# print(e-s)
-# print(f)
-# reg = "(ba|b)aa(a|ab)*"
-#reggg=lab2.half_norm(reggg)
-#print(reggg)
 
-reg1 = "cc*ba|d"
-reg2= "(ab)*"
-reg3 = "(b)*(a)"
-# old regex d|(c)d***a***c***a
-# new regex cd*a*c*a|d
-# new_reg = "cd*a*c*a|d"  ЛОМАЕТСЯ!!!!!!!!!!!
 automata = make_automata(reggg)
 print("automata", automata)
 reach_mtx = reachability_matrix(automata)
@@ -427,16 +388,30 @@ print("matrix", reach_mtx)
 list_of_reach = list_of_reachable_form_itself(reachability_matrix(automata))
 print("список сотояний, которые достижимы сами из себя", list_of_reachable_form_itself(reachability_matrix(automata)))
 # print(vars)
+print("конечные состояния", last_qq)
 is_cycl = False
 for i in range(len(list_of_reach)):
     if list_of_reach[i] in last_qq:
         is_cycl = True
 
+new_reach_list = []
+for q in last_qq:
+    for i in range(len(list_of_reach)):
+        print(list_of_reach[i], i)
+        if q in reach_mtx[find_ind(list_of_reach[i], reach_mtx)][1]:
+            if list_of_reach[i] in reach_mtx[find_ind(q, reach_mtx)][1]:
+                new_reach_list.append(list_of_reach[i])
+
+print("bbbbb", new_reach_list)
+list_of_reach = new_reach_list
+print(list_of_reach)
+
+
+
 for k in range(10):
     if len(list_of_reach) == 0 or not is_cycl:
-        print("автомат не циклический")
         last_q = random.choice(last_qq)
-        print(last_q)
+        # print(last_q)
         res_word = create_word("S", last_q, automata)
     else:
         print("генерация фрагментов путей")
@@ -444,6 +419,7 @@ for k in range(10):
         next_step = list_of_reach
         is_continue = 1
         while is_continue and len(next_step)!=0:
+            # print(is_continue)
             r = random.randint(0, len(next_step)-1)
             res.append(next_step[r])
             res.append(next_step[r])
@@ -452,42 +428,34 @@ for k in range(10):
             else:
                 is_continue = random.randint(0, 1)
             next_step = find_next_step(next_step[r], list_of_reach, reach_mtx)
-            # is_continue = random.randint(0, 1)
-        print(res)
+        # print(res)
 
         res_word = ""
 
         for i in range(len(res)-1):
             if res[i] == res[i+1]:
-                repeat = random.randint(600, 800)
+                repeat = random.randint(100, 300)
                 res_word += create_cycle(res[i], res[i], automata, False)*repeat
             else:
                 res_word += create_word(res[i], res[i+1], automata)
 
-    print (k)
+    # print (k)
     res_word=res_word+"Ω"
     print(res_word)
 
     pattern1 = r'(dd)*a*db'
-
+    pattern1 = reggg
     pattern2 = lab2.normalize(reggg)
-    #print("!!!!!!!!!!!!!!!!!!!!!!!!",pattern2)
-    #ptrn3 = r(reggg)
-    s = datetime.datetime.now()
+
+    s = time.time()
     f = re.fullmatch(pattern2, res_word)
-    print(f)
-    e = datetime.datetime.now()
-    print("Time with norm regex", e-s)
+    # print(f)
+    e = time.time()
+    print("Time with norm regex", e-s, pattern2)
 
-
-    s = datetime.datetime.now()
-    f = re.fullmatch(pattern3, res_word)
-    print(f)
-    e = datetime.datetime.now()
-    print("Time with origin regex", e-s)
+    s1 = time.time()
+    f = re.fullmatch(pattern1, res_word)
+    # print(f)
+    e1 = time.time()
+    print("Time with origin regex", e1-s1, pattern1)
     print('\n')
-
-
-    # old regex da|c***c(a(b))
-    # new regex c*cab|da
-
