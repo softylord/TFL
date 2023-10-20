@@ -93,66 +93,71 @@ def print_tree(tree):
 def back(tree):
     s=""
     #print("fooooo", tree.cargo, type(tree.cargo))
-    if tree.left!=None:
-        left=back(tree.left)
-        #print('left', left, type(left))
-        right=None
-        if tree.right!=None: 
-            right=back(tree.right)
-            #print(right)
-        if tree.cargo=='conc':
-            #print(tree.right.cargo, tree.left.cargo)
-            if left=='<eps>':
-                if right!='<eps>':
+    if tree!=None:
+        if tree.left!=None:
+            left=back(tree.left)
+            #print('left', left, type(left))
+            right=None
+            if tree.right!=None: 
+                right=back(tree.right)
+                #print(right)
+            if tree.cargo=='conc':
+                #print(tree.right.cargo, tree.left.cargo)
+                if left=='<eps>':
                     s=right
-            elif right=='<eps>':
-                s=left
-            else:
-                s=left+right
-            if tree.parent=='*' and len(s)>1:
-                s='('+s+')'
-            return s
-        elif tree.cargo=='*':
-            if left!='<eps>':
-                s=left+'*'
-            return s
-        elif tree.cargo=='|':
-            if left!='<eps>' or right!='<eps>':
-                ind=len(right)
-                if right.find('|')!=-1:
-                    ind=right.find('|')
-                if left == right[:ind]:
-                    s=right
+                elif right=='<eps>':
+                    s=left
                 else:
-                    #print(left,right)
-                    s=left+'|'+right
-
-                if tree.parent=='*' or tree.parent=='conc':
+                    s=left+right
+                if tree.parent=='*' and len(s)>1:
                     s='('+s+')'
-            #print("fff", s)
-            return s
+                return s
+            elif tree.cargo=='*':
+                if left!='<eps>':
+                    s=left+'*'
+                return s
+            elif tree.cargo=='|':
+                if left!='<eps>' or right!='<eps>':
+                    ind=len(right)
+                    if right.find('|')!=-1:
+                        ind=right.find('|')
+                    if left == right[:ind]:
+                        s=right
+                    else:
+                        #print(left,right)
+                        s=left+'|'+right
+
+                    if tree.parent=='*' or tree.parent=='conc':
+                        s='('+s+')'
+                else:
+                    s='<eps>'
+                #print("fff", s)
+                return s
+            else:
+                #print("why")
+                return tree.cargo
         else:
-            #print("why")
-            return tree.cargo
+            return str(tree.cargo)
     else:
-        return str(tree.cargo)
+        return s
     
 def ssnf(tree):
-    if tree.cargo==None:
-        print("baaad")
-        return 
-    if tree.cargo!='conc' and tree.cargo!='|' and tree.cargo!='*':
-        return Tree(tree.cargo, None, None)
-    if tree.cargo=='|':
-        return Tree('|', ssnf(tree.left), ssnf(tree.right))
-    if tree.cargo=='conc':
-        return Tree('conc', ssnf(tree.left), ssnf(tree.right))
-    if tree.cargo == '*':
-        """print('llllllllllllllllllll0')
-        print_tree(ss(tree.left))
-        print('llllllllllllllllllll2')"""
+    if tree!=None:
+        if tree.cargo==None:
+            #print("baaad")
+            return 
+        if tree.cargo!='conc' and tree.cargo!='|' and tree.cargo!='*':
+            return Tree(tree.cargo, None, None)
+        if tree.cargo=='|':
+            return Tree('|', ssnf(tree.left), ssnf(tree.right))
+        if tree.cargo=='conc':
+            return Tree('conc', ssnf(tree.left), ssnf(tree.right))
+        if tree.cargo == '*':
+            """print('llllllllllllllllllll0')
+            print_tree(ss(tree.left))
+            print('llllllllllllllllllll2')"""
 
-        return Tree('*', ss(tree.left), None)
+            return Tree('*', ss(tree.left), None)
 
 def ss(tree):
     if tree.cargo==None:
@@ -201,20 +206,23 @@ def aci(tree):
             charl=""
             charr=""
             i=0
-            while left[i]=='(':
-                i+=1
-            if i!=0:
-                charl=left[i:left.find(')')]
-            else:
-                charl=left
+            if left!="":
+                while left[i]=='(':
+                    i+=1
+                    #print(i)
+                if i!=0:
+                    charl=left[i:left.find(')')]
+                else:
+                    charl=left
 
             i=0
-            while right[i]=='(':
-                i+=1
-            if i!=0:
-                charr=right[i:right.find(')')]
-            else:
-                charr=right
+            if right!="":
+                while right[i]=='(':
+                    i+=1
+                if i!=0:
+                    charr=right[i:right.find(')')]
+                else:
+                    charr=right
             #print(charl, charr)
             if charl>charr:
                 rotate(tree)
@@ -239,14 +247,14 @@ def aci(tree):
 
         if right=='|':
             #print("pp", left)
-            #tree = Tree(tree.cargo, aci(tree.left), aci(tree.right))
+            #tree = Tree(tree.cargo, aci(tree.left), aci(tree.right), tree.parent)
             """print('===========')
             print_tree(tree)
             print('===========')"""
             rt_lt=tree.right.left.cargo
             #print("gg", left, rt_lt, rt_rt)
             if rt_lt not in op:
-                #print(left, rt_lt)
+                print(left, rt_lt)
                 i=0
                 while left[i]=='(':
                     i+=1
@@ -370,12 +378,9 @@ def dstr(tree):
                         tree=Tree(tree.cargo, lt_tree, tree.right.right, tree.parent)
                         flag=True
             
-                    
-                
         if flag:
             tree=dstr(tree)
-
-                
+          
         return tree
     
 def balance(regex):
