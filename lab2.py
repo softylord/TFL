@@ -140,6 +140,16 @@ def back(tree):
     else:
         return s
     
+def find_star(tree):
+    if tree==None:
+        return False
+    elif tree.cargo=='*':
+        #print("888888", tree.cargo)
+        return True
+    else:
+        #print("999", tree.cargo)
+        return (find_star(tree.left)) or (find_star(tree.right))
+    
 def ssnf(tree):
     if tree!=None:
         if tree.cargo==None:
@@ -148,13 +158,18 @@ def ssnf(tree):
         if tree.cargo!='conc' and tree.cargo!='|' and tree.cargo!='*':
             return Tree(tree.cargo, None, None)
         if tree.cargo=='|':
+            tree.left=ssnf(tree.left)
+            tree.right=ssnf(tree.right)
             return Tree('|', ssnf(tree.left), ssnf(tree.right))
         if tree.cargo=='conc':
+            tree.left=ssnf(tree.left)
+            tree.right=ssnf(tree.right)
             return Tree('conc', ssnf(tree.left), ssnf(tree.right))
         if tree.cargo == '*':
             """print('llllllllllllllllllll0')
             print_tree(ss(tree.left))
             print('llllllllllllllllllll2')"""
+            tree.left=ss(tree.left)
 
             return Tree('*', ss(tree.left), None)
 
@@ -167,10 +182,19 @@ def ss(tree):
     if tree.cargo=='|':
         return Tree('|', ss(tree.left), ss(tree.right))
     if tree.cargo=='conc':
-        if tree.left.cargo=='*' and tree.right.cargo=='*':
+        #tree.left=ss(tree.left)
+        #tree.right=ss(tree.right)
+       # print('++++++++++++++')
+        #print_tree(tree.left)
+        #print_tree(tree.right)
+        if find_star(tree):
+           
+            
             return Tree('|', ss(tree.left), ss(tree.right))
         else:
             #print("ppppp", ssnf(tree.left), ssnf(tree.right))
+            tree.left=ssnf(tree.left)
+            tree.right=ssnf(tree.right)
             return Tree('conc', ssnf(tree.left), ssnf(tree.right))
     if tree.cargo == '*':
         """print("aaaaaaaaaaaaaaaaaaaaaaaa")
@@ -421,9 +445,8 @@ def normalize(regex):
     tokens=list(regex)
     tokens.append('end')
     tree = get_alt(tokens)
-    """print_tree(tree)
-    print(back(tree))
-    print('-----------------')"""
+    print_tree(tree)
+    print('-----------------')
     tree2=ssnf(tree)
     #print_tree(tree2)
     #print(back(tree2))
@@ -467,4 +490,4 @@ def main():
 
     print(normalize(regex))
 
-#main()
+main()
