@@ -5,7 +5,8 @@ from test_2 import rand_reg
 import lab2
 import time
 import multiprocessing
-from wrapt_timeout_decorator import *
+import timeout_decorator
+# from wrapt_timeout_decorator import *
 
 
 """""
@@ -356,6 +357,8 @@ def create_word(first_q, last_q, automat):
         if len(next_q) == 1:
             if next_q == first_q:
                  word += next_q[0][0]*random.randint(100, 300)
+                 # repeat = random.randint(1, 5)
+                 # word += next_q[0][0] * repeat
             else:
                 word += next_q[0][0]
             nq = next_q[0]
@@ -364,6 +367,7 @@ def create_word(first_q, last_q, automat):
             nq = random.choice(next_q)
             if nq == first_q:
                 wn = nq[0][0]*random.randint(100, 300)
+                # wn = nq[0][0] * random.randint(1, 5)
                 word += wn
             else:
                 word += nq[0][0]
@@ -371,22 +375,35 @@ def create_word(first_q, last_q, automat):
     else:
         return ""
 
-@timeout(10)
+@timeout_decorator.timeout(30)
 def mach(pattern, word):
     return re.fullmatch(pattern, word)
+
 
 if __name__ == '__main__':
     """""
     генерация регулярок
     """""
-
     reggg = rand_reg([],[])
+    orig_reg = reggg
+    orr = list(orig_reg)
+    orr.append('end')
+    orig_reg2 = lab2.get_alt(orr)
+    res_orig = list(lab2.back(orig_reg2, True))
+    res_orig_regex = ""
+    for i in range(len(res_orig)):
+        res_orig_regex += res_orig[i]
+    # print("res_orig_regex", res_orig_regex, "olllllllld", reggg)
+
+    # while orig_reg.find('()')!=-1:
+    #     orig_reg=orig_reg.replace("()", "")
+
     while reggg.find('**')!=-1:
         reggg = reggg.replace("**", "*")
     while reggg.find('()')!=-1:
         reggg=reggg.replace("()", "")
     pattern3 = reggg
-    print(reggg)
+    # print(reggg, orig_reg)
 
     automata = make_automata(reggg)
     #print("automata", automata)
@@ -413,7 +430,7 @@ if __name__ == '__main__':
     list_of_reach = new_reach_list
     #print(list_of_reach)
 
-    for k in range(30):
+    for k in range(10):
         if len(list_of_reach) == 0 or not is_cycl:
             last_q = random.choice(last_qq)
             # print(last_q)
@@ -440,6 +457,10 @@ if __name__ == '__main__':
             for i in range(len(res)-1):
                 if res[i] == res[i+1]:
                     repeat = random.randint(300, 1000)
+                    # if len(res_word) > 10:
+                    #     repeat = random.randint(1, 10)
+                    # else:
+                    #     repeat = 1
                     res_word += create_cycle(res[i], res[i], automata, False)*repeat
                 else:
                     res_word += create_word(res[i], res[i+1], automata)
@@ -449,20 +470,19 @@ if __name__ == '__main__':
         # print (k)
 
         res_word=res_word+"Ω"
-        print(res_word)
 
-        pattern1 = r'(dd)*a*db'
-        pattern1 = reggg
+        pattern1 = res_orig_regex
         pattern2 = lab2.normalize(reggg)
 
         s = time.time()
         f = mach(pattern2, res_word)
-        # print(f)
         e = time.time()
         print("Time with norm regex", e-s, pattern2)
 
-        s1 = time.time()
-        f = mach(pattern1, res_word)
+        # s1 = time.time()
+        # print(pattern1, res_word)
+        # f = mach(pattern1, res_word.replace("Ω", ""))
+        # print(f)
         """p = multiprocessing.Process(target=re.fullmatch(pattern1, res_word))
         p.start()
 
@@ -479,6 +499,12 @@ if __name__ == '__main__':
             p.join()
             #f = re.fullmatch(pattern1, res_word)
             # print(f)"""
-        e1 = time.time()
-        print("Time with origin regex", e1-s1, pattern1)
+
+        s1 = time.time()
+        try:
+            f = mach(pattern1, res_word)
+            e1 = time.time()
+            print("Time with origin regex", e1 - s1, pattern1)
+        except:
+            print("Time with origin regex is more than a 30 seconds", pattern1)
         print('\n')
