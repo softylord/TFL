@@ -20,7 +20,7 @@ class Tree:
             return False
         if self is not None and other is not None:
             return (self.cargo == other.cargo) \
-                   and (self.left == other.left) and (self.right == other.right)
+                and (self.left == other.left) and (self.right == other.right)
 
 
 def check_char(token_list):
@@ -50,7 +50,8 @@ def get_char(token_list):
     else:
         x = token_list[0]
         # print("ffffffffffffffffffffff", x)
-        if type(x) != type('') or x == 'end': return None
+        if type(x) != type('') or x == 'end':
+            return None
         token_list[0:1] = []
         return Tree(x, None, None)
 
@@ -93,13 +94,14 @@ def get_alt(token_list):
 
 
 def print_tree(tree):
-    if tree == None: return
-    # print(tree.cargo)
+    if tree == None:
+        return
+    print(tree.cargo)
     print_tree(tree.left)
     print_tree(tree.right)
 
 
-def back(tree, flag):
+def back(tree, flag=False):
     s = ""
     # print("fooooo", tree.cargo, type(tree.cargo))
     if tree != None:
@@ -123,7 +125,7 @@ def back(tree, flag):
                 return s
             elif tree.cargo == '*':
                 if left != '<eps>':
-                    if flag and len(left)>1:
+                    if flag and len(left) > 1:
                         s = "("+left + ')*'
                     else:
                         s = left + "*"
@@ -187,7 +189,6 @@ def ssnf(tree):
             tree.left = ss(tree.left)
 
             return Tree('*', ss(tree.left), None)
-
 
 def ss(tree):
     if tree.cargo == None:
@@ -294,7 +295,7 @@ def aci(tree):
             rt_lt = tree.right.left.cargo
             # print("gg", left, rt_lt, rt_rt)
             if rt_lt not in op:
-                print(left, rt_lt)
+                #print(left, rt_lt)
                 i = 0
                 while left[i] == '(':
                     i += 1
@@ -360,11 +361,13 @@ def dstr(tree):
             rt_rt = tree.right.right
             if right == 'conc':
                 if lt_lt == rt_lt:
-                    rt_tree = Tree('|', tree.left.right, tree.right.right, 'conc')
+                    rt_tree = Tree('|', tree.left.right,
+                                   tree.right.right, 'conc')
                     tree = Tree('conc', tree.left.left, rt_tree, tree.parent)
                     flag = True
                 elif lt_rt == rt_rt:
-                    lt_tree = Tree('|', tree.left.left, tree.right.left, 'conc')
+                    lt_tree = Tree('|', tree.left.left,
+                                   tree.right.left, 'conc')
                     tree = Tree('conc', lt_tree, tree.left.right, tree.parent)
                     flag = True
             if right == '|':
@@ -373,15 +376,21 @@ def dstr(tree):
                     rt_lt_rt = tree.right.left.right
                     # print(lt_rt, rt_lt_rt)
                     if lt_lt == rt_lt_lt:
-                        lt_rt_tree = Tree('|', tree.left.right, tree.right.left.right, 'conc')
-                        lt_tree = Tree('conc', tree.left.left, lt_rt_tree, tree.cargo)
-                        tree = Tree(tree.cargo, lt_tree, tree.right.right, tree.parent)
+                        lt_rt_tree = Tree('|', tree.left.right,
+                                          tree.right.left.right, 'conc')
+                        lt_tree = Tree('conc', tree.left.left,
+                                       lt_rt_tree, tree.cargo)
+                        tree = Tree(tree.cargo, lt_tree,
+                                    tree.right.right, tree.parent)
                         flag = True
                     elif lt_rt == rt_lt_rt:
                         # print("here")
-                        lt_lt_tree = Tree('|', tree.left.left, tree.right.left.left, 'conc')
-                        lt_tree = Tree('conc', lt_lt_tree, tree.left.right, tree.cargo)
-                        tree = Tree(tree.cargo, lt_tree, tree.right.right, tree.parent)
+                        lt_lt_tree = Tree('|', tree.left.left,
+                                          tree.right.left.left, 'conc')
+                        lt_tree = Tree('conc', lt_lt_tree,
+                                       tree.left.right, tree.cargo)
+                        tree = Tree(tree.cargo, lt_tree,
+                                    tree.right.right, tree.parent)
                         flag = True
         if left not in op:
             if right == 'conc':
@@ -407,16 +416,22 @@ def dstr(tree):
                     # print(left, rt_lt_lt)
                     if left == rt_lt_lt:
                         eps_tree = Tree('<eps>', None, None, '|')
-                        lt_rt_tree = Tree('|', eps_tree, tree.right.left.right, 'conc')
-                        lt_tree = Tree('conc', tree.left, lt_rt_tree, tree.cargo)
-                        tree = Tree(tree.cargo, lt_tree, tree.right.right, tree.parent)
+                        lt_rt_tree = Tree(
+                            '|', eps_tree, tree.right.left.right, 'conc')
+                        lt_tree = Tree('conc', tree.left,
+                                       lt_rt_tree, tree.cargo)
+                        tree = Tree(tree.cargo, lt_tree,
+                                    tree.right.right, tree.parent)
                         flag = True
                     elif left == rt_lt_rt:
                         # print("here")
                         eps_tree = Tree('<eps>', None, None, '|')
-                        lt_lt_tree = Tree('|', eps_tree, tree.right.left.left, 'conc')
-                        lt_tree = Tree('conc', lt_lt_tree, tree.left, tree.cargo)
-                        tree = Tree(tree.cargo, lt_tree, tree.right.right, tree.parent)
+                        lt_lt_tree = Tree(
+                            '|', eps_tree, tree.right.left.left, 'conc')
+                        lt_tree = Tree('conc', lt_lt_tree,
+                                       tree.left, tree.cargo)
+                        tree = Tree(tree.cargo, lt_tree,
+                                    tree.right.right, tree.parent)
                         flag = True
 
         if flag:
@@ -441,19 +456,17 @@ def balance(regex):
         print("Error! Some \"(\" was missed")
         sys.exit()
 
-
-def half_norm(regex):
+def get_tree(regex):
     regex = regex.replace(' ', '')
     balance(regex)
     tokens = list(regex)
     tokens.append('end')
     tree = get_alt(tokens)
-    """print_tree(tree)
-    print(back(tree))
-    print('-----------------')"""
+    return tree
+
+def half_norm(tree):
+    #tree=get_tree(regex)
     tree2 = ssnf(tree)
-    # print_tree(tree2)
-    # print(back(tree2))
     tree2 = init_parents(tree2)
     tree3 = aci(tree2)
     return back(tree3, False)
@@ -466,8 +479,8 @@ def normalize(regex):
     tokens = list(regex)
     tokens.append('end')
     tree = get_alt(tokens)
-    #print_tree(tree)
-    #print('-----------------')
+    # print_tree(tree)
+    # print('-----------------')
     tree2 = ssnf(tree)
     # print_tree(tree2)
     # print(back(tree2))
@@ -510,7 +523,7 @@ def main():
     tree2= dstr(tree)
     tree2= aci(tree2)"""
 
-    print(normalize(regex))
+    print(half_norm(regex))
 
 
 #main()
