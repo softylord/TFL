@@ -3,16 +3,18 @@
 # Production Rules should be in the following format only
 # A -> R/G/...
 
+import treelib
 import numpy as np
 from prettytable import PrettyTable
 import sys
 
 
 class Tree:
-    def __init__(self, cargo, childs=None, parent=None):
+    def __init__(self, cargo, tabs=0, childs=None, parent=None):
         self.cargo = cargo
         self.childs = childs
         self.parent = parent
+        self.tabs=tabs
 
     def __str__(self):
         return str(self.cargo)
@@ -28,7 +30,11 @@ class Tree:
 def print_tree(tree):
     if tree == None:
         return
-    print(tree.cargo)
+    t=''
+    for i in range (tree.tabs):
+        t+='  |'
+    a=tree.cargo
+    print(t+a)
     if tree.childs is not None:
         for i in tree.childs:
             print_tree(i)
@@ -123,7 +129,7 @@ def ll1_checker(gra, nonterm, term):
         return mat, False
 
 stack=[]
-def parser(word, table, nonterm,  nonterm_list):
+def parser(word, table, nonterm,  nonterm_list, tabs):
     term = word[0]
     # ищем индекс терма в первой строке таблы,
     # потом ищем строку, начинающуюся с нонтерма,
@@ -164,7 +170,7 @@ def parser(word, table, nonterm,  nonterm_list):
     last=False
     for symb in main_rule:
         if symb not in nonterm_list:
-            node=Tree(symb)
+            node=Tree(symb, tabs+1)
             chld.append(node)
             if last:
                 stack.append(symb)
@@ -173,9 +179,9 @@ def parser(word, table, nonterm,  nonterm_list):
                 word=word[1:]
         else:
             last=True
-            node, word=parser(word, table, symb, nonterm_list)
+            node, word=parser(word, table, symb, nonterm_list, tabs+1)
             chld.append(node)
-    tree=Tree(nonterm, chld)
+    tree=Tree(nonterm, tabs, chld )
     return tree, word
 
 
@@ -233,7 +239,7 @@ word = 'aabdad'
 table, ll = ll1_checker(gra, nonterm, term)
 # ll это у нас просто флаг на правильность грамматики
 if ll:
-    tree, wrd=parser(word, table, 'S', nonterm)
+    tree, wrd=parser(word, table, 'S', nonterm, 0)
     #print('word', wrd)
     if wrd!='':
         for trm in wrd:
