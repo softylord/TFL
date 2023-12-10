@@ -1,0 +1,4 @@
+S -> aAB | bB | dC
+A -> aAa | bA | d
+B -> bB | d
+C -> @
