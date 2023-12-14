@@ -1,9 +1,3 @@
-# Epsilon represented by @
-# Starting Variable must be in the left hand side of first production
-# Production Rules should be in the following format only
-# A -> R/G/...
-
-import treelib
 import numpy as np
 from prettytable import PrettyTable
 import sys
@@ -14,7 +8,7 @@ class Tree:
         self.cargo = cargo
         self.childs = childs
         self.parent = parent
-        self.tabs=tabs
+        self.tabs = tabs
 
     def __str__(self):
         return str(self.cargo)
@@ -27,13 +21,14 @@ class Tree:
         else:
             return False
 
+
 def print_tree(tree):
     if tree == None:
         return
-    t=''
-    for i in range (tree.tabs):
-        t+='  |'
-    a=tree.cargo
+    t = ''
+    for i in range(tree.tabs):
+        t += '  |'
+    a = tree.cargo
     print(t+a)
     if tree.childs is not None:
         for i in tree.childs:
@@ -120,7 +115,7 @@ def ll1_checker(gra, nonterm, term):
     for i in range(len(mat)):
         if i > 0:
             x.add_row(mat[i])
-    print(mat)
+    print(x)
     if isll1:
         print("This grammar can be used for LL1 Parser")
         return mat, True
@@ -128,29 +123,36 @@ def ll1_checker(gra, nonterm, term):
         print("This grammar cannot be used for LL1 Parser")
         return mat, False
 
-stack=[]
+
+stack = []
+
+
 def parser(word, table, nonterm,  nonterm_list, tabs):
-    term = word[0]
+    if len(word) > 0:
+        term = word[0]
+    if word == '':
+        term = '$'
     # ищем индекс терма в первой строке таблы,
     # потом ищем строку, начинающуюся с нонтерма,
     # в ней берем правило по индексу терма
     ind1 = np.where(table[0] == term)
     ind2 = 0
-    for i in range(len(table[1:])):
+    for i in range(1, len(table)):
         if table[i][0] == nonterm:
             ind2 = i
             break
     rule = table[ind2][ind1][0]
     #print('rule', rule)
-    while rule=='0':
-        ex=True
-        if len(stack)!=0:
-            st=stack.pop()
-            if term==st:
-                if word!='':
-                    word=word[1:]
+    while rule == '0':
+        exit_flag = True
+
+        if len(stack) != 0:
+            st = stack.pop()
+            if term == st:
+                if word != '':
+                    word = word[1:]
                     term = word[0]
-            
+
                     ind1 = np.where(table[0] == term)
                     ind2 = 0
                     for i in range(len(table[1:])):
@@ -158,30 +160,29 @@ def parser(word, table, nonterm,  nonterm_list, tabs):
                             ind2 = i
                             break
                     rule = table[ind2][ind1][0]
-                    #print('rule', rule)
-                    ex=False
-        if ex:
+                    # print('rule', rule)
+                    exit_flag = False
+        if exit_flag:
             print("Word is not for this grammar")
             sys.exit()
-    
-    main_rule=rule.split('->')[1]
-    #print(main_rule)
-    chld=[]
-    last=False
+    main_rule = rule.split('->')[1]
+    # print(main_rule)
+    chld = []
+    last = False
     for symb in main_rule:
         if symb not in nonterm_list:
-            node=Tree(symb, tabs+1)
+            node = Tree(symb, tabs+1)
             chld.append(node)
             if last:
                 stack.append(symb)
-                #print("stack", stack)
-            else:
-                word=word[1:]
+                # print("stack", stack)
+            elif symb!='@':
+                word = word[1:]
         else:
-            last=True
-            node, word=parser(word, table, symb, nonterm_list, tabs+1)
+            last = True
+            node, word = parser(word, table, symb, nonterm_list, tabs+1)
             chld.append(node)
-    tree=Tree(nonterm, tabs, chld )
+    tree = Tree(nonterm, tabs, chld)
     return tree, word
 
 
@@ -195,10 +196,10 @@ def read_gra(fname):
     gra = dict({})
     for i in lines:
         words = i.split('->')
-        #print(words)
+        # print(words)
         prod = words[1].split('|')
         gra[words[0]] = prod
-    #print("gra", gra)
+    # print("gra", gra)
     return gra
 
 
@@ -208,19 +209,8 @@ first_set = dict({})
 nonterm = []
 term = ['a', 'b', 'd', '@']
 
-# n_nonterm=int(input("Enter number of non terminals: "))
 n_nonterm = 4
 nonterm = ['S', 'A', 'B', 'C']
-"""print("Enter the non terminals:")
-for i in range(n_nonterm):
-    c=input()
-    nonterm.append(c)"""
-
-# n_term=int(input("Enter number of terminals: "))
-"""print("Enter the terminals:")
-for i in range(n_term):
-    c=input()
-    term.append(c)"""
 
 gra = read_gra("grammar2.txt")
 
@@ -235,18 +225,18 @@ print(first_set)
 print("Follows: ", end='')
 print(follow_set)
 
-word = 'aabdad'
+word = 'abada'
 table, ll = ll1_checker(gra, nonterm, term)
-# ll это у нас просто флаг на правильность грамматики
 if ll:
-    tree, wrd=parser(word, table, 'S', nonterm, 0)
-    #print('word', wrd)
-    if wrd!='':
+    tree, wrd = parser(word, table, 'S', nonterm, 0)
+    # print('word', wrd)
+    if wrd != '':
         for trm in wrd:
-            print(trm)
-            st=stack.pop()
-            if trm!=st:
+            #print(trm)
+            st = stack.pop()
+            if trm != st:
                 print(word, " is wrong")
-    if len(stack)>0:
+    if len(stack) > 0:
         print(word, " is wrong")
+    print('\nTree:')
     print_tree(tree)
