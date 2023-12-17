@@ -58,7 +58,7 @@ def follow(var_nt, gra, nonterm):
     follow_ = set()
     start_var = (list(gra.keys())[0])
     if var_nt == start_var:
-        follow_ = follow_ | {'$'}
+        follow_ = follow_ | {'~'}
     for left_v in gra:
         for prod in gra[left_v]:
             if prod != '@':
@@ -84,7 +84,7 @@ def follow(var_nt, gra, nonterm):
 def ll1_checker(gra, nonterm, term):
     mat = np.array([["0"]*(len(term)+2)]*(len(nonterm)+1))
     mat = mat.astype('<U100')
-    term.append('$')
+    term.append('~')
     # print("Terms", term)
     for i in range((len(nonterm)+1)):
         for j in range((len(term)+1)):
@@ -131,10 +131,11 @@ def parser(word, table, nonterm,  nonterm_list, tabs):
     if len(word) > 0:
         term = word[0]
     if word == '':
-        term = '$'
+        term = '~'
     # ищем индекс терма в первой строке таблы,
     # потом ищем строку, начинающуюся с нонтерма,
     # в ней берем правило по индексу терма
+    #TODO: нафигачить многострочные слова
     ind1 = np.where(table[0] == term)
     ind2 = 0
     for i in range(1, len(table)):
@@ -151,7 +152,10 @@ def parser(word, table, nonterm,  nonterm_list, tabs):
             if term == st:
                 if word != '':
                     word = word[1:]
-                    term = word[0]
+                    if len(word) > 0:
+                        term = word[0]
+                    if word == '':
+                        term = '~'
 
                     ind1 = np.where(table[0] == term)
                     ind2 = 0
@@ -184,7 +188,7 @@ def parser(word, table, nonterm,  nonterm_list, tabs):
             chld.append(node)
     tree = Tree(nonterm, tabs, chld)
     return tree, word
-
+#TODO: нафигачить ближайшего правого соседа и нумерование нод
 
 def read_gra(fname):
     f = open(fname, "r")
@@ -225,7 +229,7 @@ print(first_set)
 print("Follows: ", end='')
 print(follow_set)
 
-word = 'abada'
+word = 'aabda'
 table, ll = ll1_checker(gra, nonterm, term)
 if ll:
     tree, wrd = parser(word, table, 'S', nonterm, 0)
