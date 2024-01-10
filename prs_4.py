@@ -229,7 +229,7 @@ print(first_set)
 print("Follows: ", end='')
 print(follow_set)
 
-word = 'aabda'
+word = 'ababda'
 table, ll = ll1_checker(gra, nonterm, term)
 if ll:
     tree, wrd = parser(word, table, 'S', nonterm, 0)
@@ -240,7 +240,9 @@ if ll:
             st = stack.pop()
             if trm != st:
                 print(word, " is wrong")
+                sys.exit()
     if len(stack) > 0:
         print(word, " is wrong")
+        sys.exit()
     print('\nTree:')
     print_tree(tree)
