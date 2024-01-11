@@ -708,8 +708,8 @@ def find_last_nonterm(tree, table):
 follow_set = dict({})
 first_set = dict({})
 
-terms = ['a', 'b', 'd', '@']
-nonterms = ['S', 'A', 'B', 'C']
+terms = ['a', 'b']
+nonterms = ['S']
 
 gra = read_gra("grammar2.txt")
 
@@ -725,7 +725,7 @@ print(first_set)
 print("Follows: ", end='')
 print(follow_set)
 
-word1 = 'baa'
+word1 = 'bbaaa'
 new_word = 'bbaabaa'
 
 word = many_line_word(word1)
@@ -785,22 +785,24 @@ if ll:
     y_ = new_word[x_mod:len(new_word)-z_mod]
     #print(y_, "-------")
     last_X = find_last_nonterm(new_tree, table)
-    # print_tree(last_X)
+    #print_tree(last_X)
     # print("Last_X_Child", last_X.childs)
     for c in last_X.childs:
-        term = c.cargo
-    # print(term)
-    ind1 = np.where(table[0] == term)
-    # print(ind1)
+        if c.cargo in terms:
+            term = c.cargo
+    #print(term[0], table[0])
+    ind1 = np.where(table[0] == term[0])
+    #print(ind1)
     ind2 = 0
     for i in range(1, len(table)):
         if table[i][0] == last_X.cargo[0]:
-            # print(table[i][0], "hhhhh")
+            ##print(table[i][0], "hhhhh", last_X.cargo[0])
             ind2 = i
+            #print(i)
             break
-    # print(ind2, ind1)
+    #print(table[ind2][ind1], ind2, ind1)
     rule = table[ind2][ind1][0]
-    # print(rule)
+    #print(rule)
     rule = rule[rule.find(">") + 1:]
     # print(rule)
     for l in rule:
