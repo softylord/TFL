@@ -387,6 +387,7 @@ last_nonterm = []
 def y_pars(word, table, nonterm, nonterm_list, tabs, start_tree, build):
     global last_nonterm
     global num_of_node
+    #print(word)
     if len(word) > 0:
         term = word[0]
     if word == '':
@@ -405,12 +406,12 @@ def y_pars(word, table, nonterm, nonterm_list, tabs, start_tree, build):
 
     if rule != '0' and build:
         main_rule = rule.split('->')[1]
-        # print(main_rule, "{[[[[[")
+        #print(main_rule, "{[[[[[")
         chld = []
         last = False
         for symb in main_rule:
             if symb not in nonterm_list:
-                # print(symb)
+                #print(symb)
                 node = Tree(symb, tabs + 1)
                 # print_tree(node)
                 chld.append(node)
@@ -419,14 +420,15 @@ def y_pars(word, table, nonterm, nonterm_list, tabs, start_tree, build):
                     stack.append(symb)
                     # print("stack", stack)
                 elif symb != '@':
+                    #print('here')
                     word = word[1:]
             else:
                 last = True
                 # print('here')
                 node = Tree(symb, tabs + 1)
-                # print(symb)
-                node, _ = y_pars(word, table, symb,
-                                 nonterm_list, tabs + 1, start_tree, build)
+                #print(symb)
+                node, _, word = y_pars(word, table, symb,
+                                       nonterm_list, tabs + 1, start_tree, build)
 
                 chld.append(node)
                 # print(node.cargo, "kkkkk")
@@ -435,7 +437,7 @@ def y_pars(word, table, nonterm, nonterm_list, tabs, start_tree, build):
         # print("0000000")
         # print_tree(tree)
 
-        return tree, last_nonterm
+        return tree, last_nonterm, word
 
     else:
         tree = Tree(nonterm, tabs)
@@ -444,7 +446,7 @@ def y_pars(word, table, nonterm, nonterm_list, tabs, start_tree, build):
             last_nonterm.append(tree)
             # print(last_nonterm, "iiiiiiiiii")
         # print(tree.cargo, "iiiiiiiiii", last_nonterm)
-        return tree, last_nonterm
+        return tree, last_nonterm, word
 
 
 def inc_par1(tree, word, nonterm, new_nonterm, table, T0, xmod, zmod, old_word, build):
@@ -462,19 +464,29 @@ def inc_par1(tree, word, nonterm, new_nonterm, table, T0, xmod, zmod, old_word, 
     else:
         # tree.add_child(Tree(new_nonterm, tree.tabs+1))
         # вот здесь он достраивает дерево до z
-        T1y, last_nonterm = y_pars(
+        T1y2=None
+        T1y, last_nonterm, word = y_pars(
             word, table, new_nonterm, nonterms, tree.tabs + 1, tree, build)
+        #print(word)
+        if len(word) != 0:
+            T1y2, last_nonterm, word = y_pars(
+                word, table, nonterms[0], nonterms, tree.tabs + 1, tree, build)
 
-        # print("+++++++++++++++")
+        #print("+++++++++++++++")
         # num_nodes(T1y)
         num_new_node(T1y)
-        # print_tree(T1y)
-        # print("+++++++++++++++")
+        #print_tree(T1y)
+        if T1y2 != None:
+            num_new_node(T1y2)
+            #print_tree(T1y2)
+        #print("+++++++++++++++")
         if len(last_nonterm) == 0:
             last_nonterm = None
         else:
             last_nonterm = last_nonterm[0]
         tree.add_child(T1y)
+        if T1y2!=None:
+            tree.add_child(T1y2)
         # print_tree(tree)
 
         # print(len(old_word) - xmod - zmod + xmod)
@@ -701,8 +713,6 @@ nonterms = ['S', 'A', 'B', 'C']
 
 gra = read_gra("grammar2.txt")
 
-word1 = 'abdd'
-new_word = 'abadad'
 
 for i in gra:
     first_set[i] = first(i, gra, nonterms)
@@ -734,8 +744,9 @@ m = len(new_word) - z
 l1 = len(new_word)
 lo = len(word)
 z_word = ""
-while word[lo - 1] == new_word[l1 - 1] and lo-1!= x_mod and l1-1!=x_mod:
+while word[lo - 1] == new_word[l1 - 1] and lo-1 != x_mod-1 and l1-1 != x_mod-1:
     z_word += word[lo - 1]
+    #print(z_word)
     lo -= 1
     l1 -= 1
 z_word = z_word[::-1]
@@ -772,9 +783,9 @@ if ll:
     # print("NEW_WORD", new_word, x_mod, z_mod)
 
     y_ = new_word[x_mod:len(new_word)-z_mod]
-    # print(y_, "-------")
+    #print(y_, "-------")
     last_X = find_last_nonterm(new_tree, table)
-    print_tree(last_X)
+    # print_tree(last_X)
     # print("Last_X_Child", last_X.childs)
     for c in last_X.childs:
         term = c.cargo
