@@ -387,7 +387,7 @@ last_nonterm = []
 def y_pars(word, table, nonterm, nonterm_list, tabs, start_tree, build):
     global last_nonterm
     global num_of_node
-    #print(word)
+    # print(word)
     if len(word) > 0:
         term = word[0]
     if word == '':
@@ -406,12 +406,12 @@ def y_pars(word, table, nonterm, nonterm_list, tabs, start_tree, build):
 
     if rule != '0' and build:
         main_rule = rule.split('->')[1]
-        #print(main_rule, "{[[[[[")
+        # print(main_rule, "{[[[[[")
         chld = []
         last = False
         for symb in main_rule:
             if symb not in nonterm_list:
-                #print(symb)
+                # print(symb)
                 node = Tree(symb, tabs + 1)
                 # print_tree(node)
                 chld.append(node)
@@ -420,13 +420,13 @@ def y_pars(word, table, nonterm, nonterm_list, tabs, start_tree, build):
                     stack.append(symb)
                     # print("stack", stack)
                 elif symb != '@':
-                    #print('here')
+                    # print('here')
                     word = word[1:]
             else:
                 last = True
                 # print('here')
                 node = Tree(symb, tabs + 1)
-                #print(symb)
+                # print(symb)
                 node, _, word = y_pars(word, table, symb,
                                        nonterm_list, tabs + 1, start_tree, build)
 
@@ -459,41 +459,51 @@ def inc_par1(tree, word, nonterm, new_nonterm, table, T0, xmod, zmod, old_word, 
     if tree.cargo != nonterm:
         if tree.childs is not None:
             for child in tree.childs:
-                N_T0, last_nonterm, s = inc_par1(child, word, nonterm, new_nonterm,
-                                                 table, T0, xmod, zmod, old_word, build)
+                N_T01, last_nonterm1, s = inc_par1(child, word, nonterm, new_nonterm,
+                                                   table, T0, xmod, zmod, old_word, build)
+                if N_T01 != None:
+                    N_T0 = N_T01
+                if last_nonterm1 != None:
+                    last_nonterm = last_nonterm1
     else:
         # tree.add_child(Tree(new_nonterm, tree.tabs+1))
         # вот здесь он достраивает дерево до z
-        T1y2=None
+        T1y2 = []
         T1y, last_nonterm, word = y_pars(
             word, table, new_nonterm, nonterms, tree.tabs + 1, tree, build)
-        #print(word)
-        if len(word) != 0:
-            T1y2, last_nonterm, word = y_pars(
+        # print(word)
+        while len(word) != 0:
+            t, last_nonterm, word = y_pars(
                 word, table, nonterms[0], nonterms, tree.tabs + 1, tree, build)
-
-        #print("+++++++++++++++")
-        # num_nodes(T1y)
-        num_new_node(T1y)
-        #print_tree(T1y)
-        if T1y2 != None:
-            num_new_node(T1y2)
-            #print_tree(T1y2)
-        #print("+++++++++++++++")
-        if len(last_nonterm) == 0:
-            last_nonterm = None
-        else:
-            last_nonterm = last_nonterm[0]
-        tree.add_child(T1y)
-        if T1y2!=None:
-            tree.add_child(T1y2)
-        # print_tree(tree)
-
-        # print(len(old_word) - xmod - zmod + xmod)
-
+            T1y2.append(t)
         N_T0 = find_node(T0, len(old_word) - xmod - zmod + xmod)
-        # print_tree(last_nonterm)
+        if N_T0 != None:
+            #print("+++++++++++++++")
+            # num_nodes(T1y)
+            num_new_node(T1y)
+            #print_tree(T1y)
+            for t in T1y2:
+                num_new_node(t)
+                #print('------------')
+                #print_tree(t)
+            #print("+++++++++++++++")
+            if len(last_nonterm) == 0:
+                last_nonterm = None
+            else:
+                last_nonterm = last_nonterm[0]
+            tree.add_child(T1y)
+            for t in T1y2:
+                tree.add_child(t)
+            # if T1y2!=None:
+            #    tree.add_child(T1y2)
+            #print_tree(tree)
+
+        #print(len(old_word) - xmod - zmod + xmod)
+
+        #print('------')
+
         s = zmod
+    #print_tree(N_T0)
     return N_T0, last_nonterm, s
 
 
@@ -519,7 +529,7 @@ def correct_tabs(tree):
 def inc_par2(T0, T1, s, wrd0, wrd1, fullT0, fullT1, table):
     global last_nonterm
     if T0 != None and T1 != None:
-        # print(T0.cargo, T1.cargo, s, wrd0, wrd1)
+        #print(T0.cargo, T1.cargo, s, wrd0, wrd1)
         if T0.cargo[0] == T1.cargo[0]:
             T1.childs = T0.childs
             T1.cargo = T0.cargo
@@ -529,14 +539,16 @@ def inc_par2(T0, T1, s, wrd0, wrd1, fullT0, fullT1, table):
             s -= l
             right_sib(fullT1)
             # print('s', s)
-            # print(len(wrd0) - s, len(wrd1) - s)
+            #print(len(wrd0) - s, len(wrd1) - s)
 
         else:
             s -= 1
             T0 = find_node(T0, len(wrd0) - s)
             inc_par2(T0, T1, s, wrd0, wrd1, fullT0, fullT1, table)
 
-        # print_tree(fullT1)
+        ##print('=====================')
+        #print_tree(fullT1)
+        #print('=====================')
         if T1.right_sibling == None:
             word_ = ""
             last_X = find_last_nonterm(fullT1, table)
@@ -562,33 +574,39 @@ def inc_par2(T0, T1, s, wrd0, wrd1, fullT0, fullT1, table):
 
             new_nonterm = ''
             for i in range(len(last_X.childs)):
-                if rule[i] in nonterms and rule[i] == last_X.childs[i].cargo[0]:
+                if i > len(rule)-1:
+                    return
+                elif rule[i] in nonterms and rule[i] == last_X.childs[i].cargo[0]:
                     # print('=========')
                     # print_tree(last_X)
                     if len(last_X.childs[i].childs) == 0:
                         new_nonterm = rule[i + 1]
                         break
-            # print('new_nonterm', new_nonterm)
+            #print('new_nonterm', new_nonterm)
+            if new_nonterm == '':
+                new_nonterm = nonterms[0]
 
             last_nonterm = []
             T0_, T1_, s = inc_par1(new_tree, word_, last_X.cargo,
                                    new_nonterm, table, fullT0, x_mod, s, wrd0, False)
+
+            #print_tree(T0_)
+            #print(T0_)
         else:
             # print('here', T1.cargo, T1.right_sibling.cargo)
             T1_ = T1.right_sibling
             T0_ = find_node(fullT0, len(wrd0) - s)
             # print(len(wrd0) - s)
+        # print(T0_.cargo)
         inc_par2(T0_, T1_, s, wrd0, wrd1, fullT0, fullT1, table)
     elif T0 != None:
-        # print_tree(fullT1)
+        print_tree(fullT1)
         word_ = ""
         last_X = find_last_nonterm(fullT1, table)
         # print('----------------------')
         # print_tree(last_X)
         first_child = last_X.childs[0].cargo
         term = first_child
-        for c in last_X.childs:
-            last_child = c.cargo
         ind1 = np.where(table[0] == term)
 
         ind2 = 0
@@ -705,6 +723,76 @@ def find_last_nonterm(tree, table):
         return tree
 
 
+def ended(tree, table):
+    global terms
+    if tree.cargo in terms:
+        return True
+    if tree.childs is not None:
+        first_child = tree.childs[0].cargo
+        term = first_child
+        # print(term, "$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$")
+        ind1 = np.where(table[0] == term)
+        ind2 = 0
+        for i in range(1, len(table)):
+            if table[i][0] == tree.cargo[0]:
+                # print(table[i][0], "hhhhh")
+                ind2 = i
+                break
+
+        rule = table[ind2][ind1][0]
+        # print(rule)
+        rule = rule[rule.find(">") + 1:]
+        # print(rule, "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%")
+        if len(tree.childs) == len(rule):
+            for child in tree.childs:
+                return ended(child, table)
+
+        else:
+            return False
+    return False
+
+
+def find_last_nonterm0(tree, table):
+    is_non_child = False
+
+    if tree.childs is not None:
+        first_child = tree.childs[0].cargo
+        term = first_child
+        # print(term, "$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$")
+        ind1 = np.where(table[0] == term)
+        ind2 = 0
+        for i in range(1, len(table)):
+            if table[i][0] == tree.cargo[0]:
+                # print(table[i][0], "hhhhh")
+                ind2 = i
+                break
+
+        rule = table[ind2][ind1][0]
+        # print(rule)
+        rule = rule[rule.find(">") + 1:]
+        # print(rule, "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%")
+
+        count_childs = 0
+        for child in tree.childs:
+            count_childs += 1
+            if child.cargo in nonterm_with_nums:
+                is_non_child = True
+        # print(count_childs)
+        if is_non_child and count_childs == len(rule):
+            # print("0000000", tree.cargo)
+            for child in tree.childs:
+                if child.cargo in nonterm_with_nums:
+                    return find_last_nonterm(child, table)
+        else:
+            for child in tree.childs:
+                if ended(child, table) == False:
+                    return find_last_nonterm(child, table)
+            return tree
+
+    else:
+        return tree
+
+
 follow_set = dict({})
 first_set = dict({})
 
@@ -725,7 +813,7 @@ print(first_set)
 print("Follows: ", end='')
 print(follow_set)
 
-word1 = 'bbaaa'
+word1 = 'baa'
 new_word = 'bbaabaa'
 
 word = many_line_word(word1)
@@ -746,7 +834,7 @@ lo = len(word)
 z_word = ""
 while word[lo - 1] == new_word[l1 - 1] and lo-1 != x_mod-1 and l1-1 != x_mod-1:
     z_word += word[lo - 1]
-    #print(z_word)
+    # print(z_word)
     lo -= 1
     l1 -= 1
 z_word = z_word[::-1]
@@ -779,32 +867,32 @@ if ll:
         tree, word, new_word, x_mod, m)
 
     # print(oldword, newword, xmod, mm, "[[[[[[[[[[[[[[[[[")
-    # print_tree(new_tree)
+    #print_tree(new_tree)
     # print("NEW_WORD", new_word, x_mod, z_mod)
 
     y_ = new_word[x_mod:len(new_word)-z_mod]
     #print(y_, "-------")
-    last_X = find_last_nonterm(new_tree, table)
+    last_X = find_last_nonterm0(new_tree, table)
     #print_tree(last_X)
     # print("Last_X_Child", last_X.childs)
     for c in last_X.childs:
         if c.cargo in terms:
             term = c.cargo
-    #print(term[0], table[0])
+    # print(term[0], table[0])
     ind1 = np.where(table[0] == term[0])
-    #print(ind1)
+    # print(ind1)
     ind2 = 0
     for i in range(1, len(table)):
         if table[i][0] == last_X.cargo[0]:
-            ##print(table[i][0], "hhhhh", last_X.cargo[0])
+            # print(table[i][0], "hhhhh", last_X.cargo[0])
             ind2 = i
-            #print(i)
+            # print(i)
             break
-    #print(table[ind2][ind1], ind2, ind1)
+    # print(table[ind2][ind1], ind2, ind1)
     rule = table[ind2][ind1][0]
-    #print(rule)
-    rule = rule[rule.find(">") + 1:]
     # print(rule)
+    rule = rule[rule.find(">") + 1:]
+    #print(rule)
     for l in rule:
         if l in nonterms:
             new_nonterm = l
