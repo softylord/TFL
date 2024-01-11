@@ -715,8 +715,8 @@ print(first_set)
 print("Follows: ", end='')
 print(follow_set)
 
-word1 = 'abdd'
-new_word = 'abadad'
+word1 = 'baa'
+new_word = 'bbaabaa'
 
 word = many_line_word(word1)
 new_word = many_line_word(new_word)
@@ -734,7 +734,7 @@ m = len(new_word) - z
 l1 = len(new_word)
 lo = len(word)
 z_word = ""
-while word[lo - 1] == new_word[l1 - 1]:
+while word[lo - 1] == new_word[l1 - 1] and lo-1!= x_mod and l1-1!=x_mod:
     z_word += word[lo - 1]
     lo -= 1
     l1 -= 1
