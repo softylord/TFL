@@ -1,6 +1,7 @@
 from z3 import *
 import sys
 
+
 def liner_func(term):
     left_ind = []
     left = 0
@@ -38,6 +39,7 @@ def liner_func(term):
             counter += 1
 
     return term
+
 
 def mult(term):
     multipliers = {}
@@ -90,6 +92,7 @@ def mult(term):
     return multipliers
     # print(term)
 
+
 def parse(terms):
     balance = 0
     term1 = terms[:terms.find("=")]
@@ -138,46 +141,54 @@ def parse(terms):
 
     exp = "And( "
     for f in constr:
-        ex1 = ""
-        ex2 = "And("
-        left = 0
-        right = 0
-        constr_find = False
-        counter = 1
-        for i in terms:
-            if i == f:
-                constr_find = True
-            if constr_find:
-                if i == '(':
-                    left += 1
-                if i == ')':
-                    right += 1
-                if left-right == 1 and i == ',':
-                    counter += 1
-                if left == right and left != 0:
-                    counter += 1
-                    break
-        # print(f, counter)
-        amount.append(counter)
-        co = []
-        for i in range(counter):
-            a = "a"+str(co_counter)
-            co.append(a)
-            co_counter += 1
-            if i == counter-1:
-                ex1 = a+">0"
+        if coefs.get(f) is None:
+            ex1 = ""
+            ex2 = "And("
+            left = 0
+            right = 0
+            constr_find = False
+            finded_constr=[]
+            counter = 1
+            for i in terms:
+                if i == f:
+                    constr_find = True
+                    finded_constr.append(f)
+                if constr_find:
+                    if i == '(':
+                        left += 1
+                    if i == ')':
+                        right += 1
+                    if left-right == 1 and i == ',':
+                        counter += 1
+                    if left == right and left != 0:
+                        counter += 1
+                        break
+            #print(f, counter)
+            amount.append(counter)
+        
+            co = []
+            for i in range(counter):
+                a = "a"+str(co_counter)
+                co.append(a)
+                co_counter += 1
+                if i == counter-1:
+                    ex1 = a+">0"
+                else:
+                    ex2 += a+">1, "
+            if len(ex2) > 4:
+                ex2 = ex2[:-2]+"), "
             else:
-                ex2 += a+">1, "
-        if len(ex2) > 4:
-            ex2 = ex2[:-2]+"), "
-        else:
-            ex2 = ""
-        exp += "Or( "+ex2+ex1+"), "
-        # print (exp)
-        coefs[f] = co
-    exp = exp[:-2]+")"
+                ex2 = ""
+            exp += "Or( "+ex2+ex1+"), "
+            # print (exp)
+            
+            coefs[f] = co
+    if len(exp)>5:   
+        exp = exp[:-2]+")"
+    else:
+        exp=''
 
-    # print(coefs, "yyyyyy")
+    print(coefs, "yyyyyy")
     # print(co)
     expr = "And("
     for i in coefs:
@@ -192,8 +203,9 @@ def parse(terms):
                 expr += j+">=1, "
             # s.add(eval(j+">=0"))
     # print (expr[:-2]+")")
-    # print(exp)
-    s.add(eval(exp))
+    print(exp)
+    if exp!="":
+        s.add(eval(exp))
     s.add(eval(expr[:-2]+")"))
     # составляем линейную функцию
     term1 = liner_func(term1)
@@ -221,7 +233,7 @@ def parse(terms):
         s.add(eval(mu1[v]+'>='+mu2[v]))
         expr1 += "("+mu1[v]+'>'+mu2[v]+"), "
     expr1 = expr1[:-2]+")"
-    # print(expr1)
+    print(expr1)
     s.add(eval(expr1))
     # print(mu1,"\n", mu2)
     # записываем неравенства
@@ -260,5 +272,6 @@ for i in range(len(terms)):
     parse(terms[i])
 
 print(s.check())
+print(s.sexpr())
 if s.check() == z3.sat:
     print(s.model())
